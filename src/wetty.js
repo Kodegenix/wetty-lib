@@ -1,84 +1,106 @@
-const socket = io(location.origin, { path: '/wetty/socket.io' });
-let term;
+let term = null;
 let buf = '';
 
-class Wetty {
-  constructor(argv) {
-    this.argv_ = argv;
-    this.io = null;
-    this.pid_ = -1;
-  }
+export function listen(socket) {
+    function onSshStarted() {
 
-  run() {
-    this.io = this.argv_.io.push();
-    this.io.onVTKeystroke = this.sendString_.bind(this);
-    this.io.sendString = this.sendString_.bind(this);
-    this.io.onTerminalResize = this.onTerminalResize.bind(this);
-  }
+        console.log('ssh.started event received')
 
-  sendString_(str) {
-    socket.emit('input', str);
-  }
+        function socketOnOutput (data) {
+            if (!term) {
+                buf += data;
+                return;
+            }
+            term.io.writeUTF8(data);
+        }
+        function socketOnLogout() {
+            console.log('on logout')
 
-  onTerminalResize(col, row) {
-    socket.emit('resize', { col, row });
-  }
-}
+            window.removeEventListener('beforeunload', handler, false);
+            socket.removeListener('output', socketOnOutput);
+            socket.removeListener('ssh.started', onSshStarted);
+            socket.removeListener('ssh.disconnect', socketOnSshDisconnect);
+            socket.removeListener('logout', socketOnLogout);
+        }
+        function socketOnSshDisconnect() {
+            console.log('on ssh.disconnect')
 
-socket.on('connect', () => {
-  document.getElementById('overlay').style.display = 'none';
-  window.addEventListener('beforeunload', handler, false);
-  lib.init(() => {
-    hterm.defaultStorage = new lib.Storage.Local();
-    term = new hterm.Terminal();
-    window.term = term;
-    term.decorate(document.getElementById('terminal'));
+            window.removeEventListener('beforeunload', handler, false);
+            socket.removeListener('output', socketOnOutput);
+            socket.removeListener('ssh.started', onSshStarted);
+            socket.removeListener('logout', socketOnLogout);
+            socket.removeListener('ssh.disconnect', socketOnSshDisconnect);
+        }
 
-    term.setCursorPosition(0, 0);
-    term.setCursorVisible(true);
-    term.prefs_.set('ctrl-c-copy', true);
-    term.prefs_.set('ctrl-v-paste', true);
-    term.prefs_.set('use-default-window-copy', true);
-    term.prefs_.set('send-encoding', 'raw');
-    term.prefs_.set('receive-encoding', 'raw');
-    term.prefs_.set('font-size', 14);
-    term.scrollPort_.screen_.setAttribute('spellcheck', 'false');
-    term.scrollPort_.screen_.setAttribute('autocorrect', 'false');
-    term.scrollPort_.screen_.setAttribute('autocomplete', 'false');
-    term.scrollPort_.screen_.setAttribute('contenteditable', 'false');
+        window.addEventListener('beforeunload', handler, false);
+        lib.init(() => {
+            hterm.defaultStorage = new lib.Storage.Local();
+            term = new hterm.Terminal();
+            // window.term = term;
+            term.decorate(document.getElementById('terminal'));
 
-    term.runCommandClass(Wetty, document.location.hash.substr(1));
-    socket.emit('resize', {
-      col: term.screenSize.width,
-      row: term.screenSize.height,
-    });
+            term.setCursorPosition(0, 0);
+            term.setCursorVisible(true);
+            term.prefs_.set('ctrl-c-copy', true);
+            term.prefs_.set('ctrl-v-paste', true);
+            term.prefs_.set('use-default-window-copy', true);
+            term.prefs_.set('send-encoding', 'raw');
+            term.prefs_.set('receive-encoding', 'raw');
+            term.prefs_.set('font-size', 14);
+            term.scrollPort_.screen_.setAttribute('spellcheck', 'false');
+            term.scrollPort_.screen_.setAttribute('autocorrect', 'false');
+            term.scrollPort_.screen_.setAttribute('autocomplete', 'false');
+            term.scrollPort_.screen_.setAttribute('contenteditable', 'false');
 
-    if (buf && buf !== '') {
-      term.io.writeUTF8(buf);
-      buf = '';
+            term.runCommandClass(Wetty, document.location.hash.substr(1));
+            socket.emit('resize', {
+                col: term.screenSize.width,
+                row: term.screenSize.height,
+            });
+
+            if (buf && buf !== '') {
+                term.io.writeUTF8(buf);
+                buf = '';
+            }
+
+            socket.on('output', socketOnOutput);
+
+            socket.on('logout', socketOnLogout);
+
+            socket.on('ssh.disconnect', socketOnSshDisconnect);
+        });
+
     }
-  });
-});
 
-socket.on('output', data => {
-  if (!term) {
-    buf += data;
-    return;
-  }
-  term.io.writeUTF8(data);
-});
+    class Wetty {
+        constructor(argv) {
+            this.argv_ = argv;
+            this.io = null;
+            this.pid_ = -1;
+        }
 
-socket.on('logout', () => {
-  document.getElementById('overlay').style.display = 'block';
-  window.removeEventListener('beforeunload', handler, false);
-});
+        run() {
+            this.io = this.argv_.io.push();
+            this.io.onVTKeystroke = this.sendString_.bind(this);
+            this.io.sendString = this.sendString_.bind(this);
+            this.io.onTerminalResize = this.onTerminalResize.bind(this);
+        }
 
-socket.on('disconnect', () => {
-  document.getElementById('overlay').style.display = 'block';
-  window.removeEventListener('beforeunload', handler, false);
-});
+        sendString_(str) {
+            socket.emit('input', str);
+        }
 
-function handler(e) {
-  e.returnValue = 'Are you sure?';
-  return e.returnValue;
+        onTerminalResize(col, row) {
+            socket.emit('resize', {col, row});
+        }
+    }
+
+    console.log('listen')
+
+    socket.on('ssh.started', onSshStarted);
+
+    function handler(e) {
+        e.returnValue = 'Are you sure?';
+        return e.returnValue;
+    }
 }
