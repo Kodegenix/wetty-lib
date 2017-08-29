@@ -20,7 +20,7 @@ gulp.task('compress', [], () =>
         ignoreFiles: ['.combo.js', '*.min.js'],
       }),
     )
-    .pipe(gulp.dest('./public/wetty')),
+    .pipe(gulp.dest('./min')),
 );
 
 gulp.task(

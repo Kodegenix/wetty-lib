@@ -50,10 +50,7 @@
   },
   "homepage": "https://github.com/butlerx/wetty",
   "preferGlobal": "true",
-  "main": "app.js",
-  "bin": {
-    "wetty": "./app.js"
-  },
+  "main": "min/wetty.min.js",
   "@std/esm": {
     "esm": "js",
     "cjs": "true"
