@@ -56,15 +56,11 @@
     "cjs": "true"
   },
   "files": [
-    "bin",
-    "public"
+    "min",
+    "src"
   ],
   "scripts": {
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
     "build": "gulp",
-    "start": "node app.js",
-    "commit": "git add public",
-    "fix": "eslint . --fix"
+    "commit": "git add public"
   }
 }
