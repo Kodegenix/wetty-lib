@@ -1,7 +1,7 @@
 let term = null;
 let buf = '';
 
-export function listen(socket) {
+export function create(socket, terminalId) {
     function onSshStarted() {
 
         console.log('ssh.started event received')
@@ -37,7 +37,7 @@ export function listen(socket) {
             hterm.defaultStorage = new lib.Storage.Local();
             term = new hterm.Terminal();
             // window.term = term;
-            term.decorate(document.getElementById('terminal'));
+            term.decorate(document.getElementById(terminalId));
 
             term.setCursorPosition(0, 0);
             term.setCursorVisible(true);
@@ -95,7 +95,7 @@ export function listen(socket) {
         }
     }
 
-    console.log('listen')
+    console.log('create')
 
     socket.on('ssh.started', onSshStarted);
 
