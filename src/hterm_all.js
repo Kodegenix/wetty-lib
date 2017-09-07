@@ -17972,4 +17972,4 @@ lib.resource.add('hterm/git/HEAD', 'text/plain',
 ''
 );
 
-
+export {lib, hterm};

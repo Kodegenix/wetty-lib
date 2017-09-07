@@ -1,3 +1,5 @@
+import {lib, hterm} from './hterm_all';
+
 let term = null;
 let buf = '';
 
@@ -16,7 +18,6 @@ export function create(socket, terminalId) {
         function socketOnLogout() {
             console.log('on logout')
 
-            window.removeEventListener('beforeunload', handler, false);
             socket.removeListener('output', socketOnOutput);
             socket.removeListener('ssh.started', onSshStarted);
             socket.removeListener('ssh.disconnect', socketOnSshDisconnect);
@@ -25,14 +26,12 @@ export function create(socket, terminalId) {
         function socketOnSshDisconnect() {
             console.log('on ssh.disconnect')
 
-            window.removeEventListener('beforeunload', handler, false);
             socket.removeListener('output', socketOnOutput);
             socket.removeListener('ssh.started', onSshStarted);
             socket.removeListener('logout', socketOnLogout);
             socket.removeListener('ssh.disconnect', socketOnSshDisconnect);
         }
 
-        window.addEventListener('beforeunload', handler, false);
         lib.init(() => {
             hterm.defaultStorage = new lib.Storage.Local();
             term = new hterm.Terminal();
@@ -98,9 +97,4 @@ export function create(socket, terminalId) {
     console.log('create')
 
     socket.on('ssh.started', onSshStarted);
-
-    function handler(e) {
-        e.returnValue = 'Are you sure?';
-        return e.returnValue;
-    }
 }

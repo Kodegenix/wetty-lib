@@ -2,65 +2,25 @@
   "name": "wetty-lib",
   "version": "0.4.0",
   "dependencies": {
-    "@std/esm": "^0.2.2",
-    "express": "^4.15.3",
-    "fs-extra": "^4.0.1",
-    "optimist": "^0.6",
-    "pre-commit": "^1.2.2",
-    "pty.js": "^0.3.1",
-    "serve-favicon": "^2.4.3",
     "socket.io": "^1.3.7"
   },
-  "devDependencies": {
-    "babel-cli": "6.24.1",
-    "babel-core": "6.24.1",
-    "babel-eslint": "7.2.3",
-    "babel-plugin-add-module-exports": "0.2.1",
-    "babel-plugin-es6-promise": "1.1.1",
-    "babel-plugin-syntax-async-functions": "6.13.0",
-    "babel-plugin-transform-async-to-generator": "6.24.1",
-    "babel-plugin-transform-object-assign": "6.22.0",
-    "babel-preset-es2015": "6.24.1",
-    "del": "^3.0.0",
-    "es6-promise": "^4.1.1",
-    "eslint": "3.19.0",
-    "eslint-config-airbnb": "^15.1.0",
-    "eslint-config-standard": "10.2.1",
-    "eslint-plugin-import": "^2.7.0",
-    "eslint-plugin-jsx-a11y": "^5.1.1",
-    "eslint-plugin-node": "^5.1.1",
-    "eslint-plugin-promise": "^3.5.0",
-    "eslint-plugin-react": "^7.1.0",
-    "eslint-plugin-standard": "^3.0.1",
-    "gulp": "^3.9.1",
-    "gulp-babel": "^6.1.2",
-    "gulp-concat": "^2.6.1",
-    "gulp-minify": "^1.0.0",
-    "gulp-shell": "^0.6.3"
-  },
-  "description": "Wetty = Web + tty. Terminal access in browser over http/https ",
+  "description": "Terminal access in browser over http/https",
   "repository": {
     "type": "git",
-    "url": "git://github.com/butlerx/wetty.git"
+    "url": "git://github.com/Kodegenix/wetty-lib.git"
   },
-  "author": "Cian Butler <butlerx@notthe.cloud> (https://github.com/butlerx)",
+  "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/butlerx/wetty/issues"
+    "url": "https://github.com/Kodegenix/wetty-lib/issues"
   },
-  "homepage": "https://github.com/butlerx/wetty",
+  "homepage": "https://github.com/Kodegenix/wetty-lib",
   "preferGlobal": "true",
-  "main": "min/wetty.min.js",
-  "@std/esm": {
-    "esm": "js",
-    "cjs": "true"
-  },
+  "main": "src/wetty.js",
   "files": [
-    "min",
     "src"
   ],
   "scripts": {
-    "build": "gulp",
     "commit": "git add public"
   }
 }
