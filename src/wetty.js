@@ -16,12 +16,10 @@ class Wetty {
         self.socket = socket;
         self.terminalId = terminalId;
         self.buf = buf;
-        let term;
 
         lib.init(() => {
             hterm.defaultStorage = new lib.Storage.Local();
-            term = new hterm.Terminal();
-            // window.term = term;
+            let term = new hterm.Terminal();
             term.decorate(document.getElementById(terminalId));
 
             term.setCursorPosition(0, 0);
@@ -36,7 +34,7 @@ class Wetty {
             term.scrollPort_.screen_.setAttribute('autocorrect', 'false');
             term.scrollPort_.screen_.setAttribute('autocomplete', 'false');
             term.scrollPort_.screen_.setAttribute('contenteditable', 'false');
-            term.setHeight(30)
+            term.setHeight(15)
             term.setWidth(150)
 
 
@@ -45,27 +43,23 @@ class Wetty {
                 buf = '';
             }
 
-            console.log('resolve')
             self.term = term;
             deferred.resolve();
         });
 
-
-        console.log('init')
-        // socket.on('ssh.started', onSshStarted);
         return deferred.promise;
     }
 
     connect(config) {
-        console.log('connect')
         const socket = this.socket;
         const term = this.term;
         const self = this;
 
         let buf = self.buf;
-        const reqId = uuid.v4();
 
         function onSshStarted(connId) {
+            self.connId = connId;
+
             class Command {
                 constructor(argv) {
                     this.argv_ = argv;
@@ -82,6 +76,7 @@ class Wetty {
 
                 sendString_(str) {
                     socket.emit('ssh.input' + connId, str);
+                    // console.log('sending to ' + connId + '\n ' + str)
                 }
 
                 onTerminalResize(col, row) {
@@ -89,8 +84,8 @@ class Wetty {
                 }
             }
 
-
             function socketOnOutput(data) {
+                // console.log('output from ' + self.connId + ' \n' + data)
                 if (!term) {
                     buf += data;
                     return;
@@ -98,27 +93,18 @@ class Wetty {
                 term.io.writeUTF8(data);
             }
 
-            function socketOnLogout() { // TODO merge
-                console.log('on logout')
-
+            function cleanup() { // TODO merge
+                console.log('disconnected, cleanup...')
                 removeAllChildren(document.getElementById(self.terminalId))
 
-                socket.removeListener('output', socketOnOutput);
-                // socket.removeListener('ssh.started', onSshStarted);
-                socket.removeListener('ssh.disconnect', socketOnSshDisconnect);
-                socket.removeListener('logout', socketOnLogout);
+                socket.removeListener('ssh.output' + connId, socketOnOutput);
+                socket.removeListener('ssh.started' + connId, onSshStarted);
+                socket.removeListener('ssh.disconnect' + connId, cleanup);
+                socket.removeListener('ssh.logout' + connId, cleanup);
+                if (self.disconnectedCb) {
+                    self.disconnectedCb()
+                }
             }
-
-            function socketOnSshDisconnect() {// TODO merge
-                console.log('on ssh.disconnect')
-                removeAllChildren(document.getElementById(self.terminalId))
-
-                socket.removeListener('ssh.output', socketOnOutput);
-                // socket.removeListener('ssh.started', onSshStarted);
-                socket.removeListener('ssh.logout', socketOnLogout);
-                socket.removeListener('ssh.disconnect', socketOnSshDisconnect);
-            }
-
 
             socket.emit('ssh.resize' + connId, {
                 col: term.screenSize.width,
@@ -126,24 +112,24 @@ class Wetty {
             });
 
             socket.on('ssh.output' + connId, socketOnOutput);
-
-            socket.on('ssh.logout' + connId, socketOnLogout);
-
-            socket.on('ssh.disconnect' + connId, socketOnSshDisconnect);
+            socket.on('ssh.logout' + connId, cleanup);
+            socket.on('ssh.disconnect' + connId, cleanup);
             term.runCommandClass(Command);
-
         }
 
+        const connId = uuid.v4();
 
-        socket.on('ssh.started' + reqId, onSshStarted)
-        console.log('emit...')
+        socket.on('ssh.started' + connId, onSshStarted)
 
-        socket.emit('ssh.start', {reqId, config})
+        socket.emit('ssh.start', {connId, config})
     }
 
     disconnect() {
-        this.socket.emit('ssh.disconnect', {})
+        this.socket.emit('ssh.disconnect' + this.connId, {})
+    }
 
+    onDisconnected(cb) {
+        this.disconnectedCb = cb;
     }
 }
 
